@@ -1,0 +1,140 @@
+<style type="text/css">
+body {
+  padding: 0px;
+  margin: 0px;
+}
+#wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+#toc {
+  width: 20%;
+  padding: 10px;
+  border-right: 1px solid #000;
+}
+textarea {
+  padding: 0px;
+  margin: 0px 0px 0px 10px;
+  border: 0px solid #000000;
+  width: 80%;
+  height: 100%;
+  font-size: 16px;
+  font-family: arial;
+  background: rgba(255, 255, 255, 0);
+  outline: none;
+  line-height: 22px;
+}
+#light-up {
+  position: absolute;
+  top: 0%;
+  left: 22%;
+  width: 79%;
+  height: 50%;
+  z-index: -1;
+  background-color: #ffffff;
+}
+#shadow {
+  position: absolute;
+  top: 0%;
+  left: 22%;
+  width: 80%;
+  height: 100%;
+  z-index: -2;
+  background-color: #888888;
+}
+</style>
+
+<div id="wrapper">
+  <div id="toc">
+    <div v-for='item in toc' v-html="convert(item)" @click="lightUp(item)"></div>
+  </div>
+  <textarea id="editor" v-model="markdown"
+    @keyup="lightUpCurrentLevel"
+    @click="lightUpCurrentLevel"
+    @scroll="scroll"
+  ></textarea>
+</div>
+<div id="light-up"></div>
+<div id="shadow"></div>
+
+<script type="text/javascript" src="./vue.min.js"></script>
+<script>
+
+let vm = new Vue({
+  el: '#wrapper',
+  data: {
+    message: 123,
+    markdown: window.localStorage.getItem('markdown'),
+    toc: '',
+    // [{level:1, string: 'aaa', lineNumber: 12, length: 10}, {level:2, string: 'aaa'}, {level:3, string: 'aaa'}]
+    currentItemInEdit: null
+  },
+  mounted() {
+    this.toc = this.parse(this.markdown)
+  },
+  watch: {
+    markdown: (string) => {
+      vm.toc = vm.parse(string)
+      // const lightUp = document.getElementById("lightUp");
+      // lightUp.style = `height: 100%; top: 0px;`
+      window.localStorage.setItem('markdown', string)
+    }
+  },
+  methods: {
+    lightUpCurrentLevel() {
+      const ta = document.getElementById("editor");
+      const currentLineNumber = this.markdown.substr(0, ta.selectionEnd).split('\n').length
+      const item = this.toc.find((item) => {
+        return item.lineNumber === currentLineNumber
+      })
+      if (item) {
+        this.lightUp(item)
+      }
+    },
+    convert(item) {
+      let level = ''
+      for(let i=0; i<item.level-1; i++) level += '&nbsp;&nbsp;'
+      return level + (item.string || '')
+    },
+    parse(string) {
+      const parsed = string.split('\n').map((line, index) => {
+        return `${line},${index+1}`
+      }).filter((line) => {
+        return line.match(/^#/)
+      }).map((element) => {
+        let item = {}
+        const string = (/[^#]+/.exec(element) || [])[0]
+        item.string = string.split(",")[0]
+        item.level = element.split('#').length - 1
+        item.lineNumber = parseInt(string.split(",")[1], 10)
+        return item
+      })
+      return parsed
+    },
+    lightUp(item) {
+      const ta = document.getElementById("editor");
+      const lineHeight = 22
+      const jump = (item.lineNumber - 1) * lineHeight;
+      ta.scrollTop = jump;
+
+      let length = Math.max(this.markdown.split('\n').length - item.lineNumber, 1);
+      const index = this.toc.indexOf(item)
+      for (let i=index+1; i<this.toc.length; i++) {
+        if (item.level >= this.toc[i].level) {
+          length = this.toc[i].lineNumber - item.lineNumber
+          break
+        } else {
+          // nothing
+        }
+      }
+      const lightUpHeight = length * lineHeight
+      const top = jump - ta.scrollTop
+
+      const lightUp = document.getElementById("light-up");
+      lightUp.style = `height: ${lightUpHeight}px; top: ${top}px;`
+    }
+  }
+})
+
+</script>
