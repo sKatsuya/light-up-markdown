@@ -11,7 +11,20 @@ body {
 #toc {
   width: 20%;
   padding: 10px;
-  border-right: 1px solid #000;
+  border-right: 1px solid #bbb;
+  background-color: #fffafa;
+  font-size: 12px;
+  line-height: 24px;
+  overflow: scroll;
+}
+.toc-item {
+  padding-left: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.is-selected-toc-item {
+  background-color: #d0f0d0;
 }
 textarea {
   padding: 0px;
@@ -19,18 +32,18 @@ textarea {
   border: 0px solid #000000;
   width: 80%;
   height: 100%;
-  font-size: 16px;
+  font-size: 14px;
   font-family: arial;
   background: rgba(255, 255, 255, 0);
   outline: none;
-  line-height: 22px;
+  line-height: 20px;
 }
 #light-up {
   position: absolute;
   top: 0%;
   left: 22%;
-  width: 79%;
-  height: 50%;
+  width: 78%;
+  height: 100%;
   z-index: -1;
   background-color: #ffffff;
 }
@@ -38,22 +51,19 @@ textarea {
   position: absolute;
   top: 0%;
   left: 22%;
-  width: 80%;
+  width: 78%;
   height: 100%;
   z-index: -2;
   background-color: #888888;
 }
 </style>
 
-<div id="wrapper">
+<div id="wrapper" @keyup="">
   <div id="toc">
-    <div v-for='item in toc' v-html="convert(item)" @click="lightUp(item)"></div>
+    <div class="toc-item" v-for='(item, index) in toc' v-html="createTocItem(item)" @click="lightUp(item)"
+      :class="{'is-selected-toc-item': index === selectedTocItemPosition}"></div>
   </div>
-  <textarea id="editor" v-model="markdown"
-    @keyup="lightUpCurrentLevel"
-    @click="lightUpCurrentLevel"
-    @scroll="scroll"
-  ></textarea>
+  <textarea id="editor" v-model="markdown" @keyup="stopLightUp" @click="stopLightUp"></textarea>
 </div>
 <div id="light-up"></div>
 <div id="shadow"></div>
@@ -68,20 +78,37 @@ let vm = new Vue({
     markdown: window.localStorage.getItem('markdown'),
     toc: '',
     // [{level:1, string: 'aaa', lineNumber: 12, length: 10}, {level:2, string: 'aaa'}, {level:3, string: 'aaa'}]
-    currentItemInEdit: null
+    selectedTocItemPosition: 1
   },
   mounted() {
+    window.addEventListener('keyup', this.useHotKey);
     this.toc = this.parse(this.markdown)
   },
   watch: {
     markdown: (string) => {
       vm.toc = vm.parse(string)
-      // const lightUp = document.getElementById("lightUp");
-      // lightUp.style = `height: 100%; top: 0px;`
       window.localStorage.setItem('markdown', string)
     }
   },
   methods: {
+    stopLightUp(event) {
+      if (event && event.keyCode === 17) {
+        return
+      }
+      const lightUp = document.getElementById("light-up");
+      lightUp.style = `height: 100%; top: 0px;`
+    },
+    useHotKey(event) {
+      if (event.ctrlKey && event.keyCode === 40) {
+        this.selectedTocItemPosition = Math.min(++this.selectedTocItemPosition, this.toc.length-1)
+        this.lightUp(this.toc[this.selectedTocItemPosition])
+        const ta = document.getElementById("editor");
+        ta.selectionEnd = 1
+      } else if (event.ctrlKey && event.keyCode === 38) {
+        this.selectedTocItemPosition = Math.max(--this.selectedTocItemPosition, 0)
+        this.lightUp(this.toc[this.selectedTocItemPosition])
+      }
+    },
     lightUpCurrentLevel() {
       const ta = document.getElementById("editor");
       const currentLineNumber = this.markdown.substr(0, ta.selectionEnd).split('\n').length
@@ -92,7 +119,7 @@ let vm = new Vue({
         this.lightUp(item)
       }
     },
-    convert(item) {
+    createTocItem(item) {
       let level = ''
       for(let i=0; i<item.level-1; i++) level += '&nbsp;&nbsp;'
       return level + (item.string || '')
@@ -114,7 +141,7 @@ let vm = new Vue({
     },
     lightUp(item) {
       const ta = document.getElementById("editor");
-      const lineHeight = 22
+      const lineHeight = 20
       const jump = (item.lineNumber - 1) * lineHeight;
       ta.scrollTop = jump;
 
