@@ -54,13 +54,14 @@ textarea {
   width: 78%;
   height: 100%;
   z-index: -2;
-  background-color: #888888;
+  background-color: #aaaaaa;
 }
 </style>
 
+<title>LightUp Markdown</title>
 <div id="wrapper" @keyup="">
   <div id="toc">
-    <div class="toc-item" v-for='(item, index) in toc' v-html="createTocItem(item)" @click="lightUp(item)"
+    <div class="toc-item" v-for='(item, index) in toc' v-html="createTocItem(item)" @click="lightUpByIndex(index)"
       :class="{'is-selected-toc-item': index === selectedTocItemPosition}"></div>
   </div>
   <textarea id="editor" v-model="markdown" @keyup="stopLightUp" @click="stopLightUp"></textarea>
@@ -82,6 +83,14 @@ let vm = new Vue({
   },
   mounted() {
     window.addEventListener('keyup', this.useHotKey);
+    window.addEventListener('keydown', (event) => {
+      if (event.ctrlKey && event.keyCode === 75) {
+        event.preventDefault()
+      }
+      if (event.ctrlKey && event.keyCode === 76) {
+        event.preventDefault()
+      }
+    });
     this.toc = this.parse(this.markdown)
   },
   watch: {
@@ -99,25 +108,47 @@ let vm = new Vue({
       lightUp.style = `height: 100%; top: 0px;`
     },
     useHotKey(event) {
-      if (event.ctrlKey && event.keyCode === 40) {
-        this.selectedTocItemPosition = Math.min(++this.selectedTocItemPosition, this.toc.length-1)
-        this.lightUp(this.toc[this.selectedTocItemPosition])
-        const ta = document.getElementById("editor");
-        ta.selectionEnd = 1
-      } else if (event.ctrlKey && event.keyCode === 38) {
-        this.selectedTocItemPosition = Math.max(--this.selectedTocItemPosition, 0)
-        this.lightUp(this.toc[this.selectedTocItemPosition])
+      if (event.ctrlKey && event.keyCode === 74) {
+        // TocItem +移動
+        const index = Math.min(++this.selectedTocItemPosition, this.toc.length-1)
+        this.lightUpByIndex(index)
+        this.jumpToSelectedTocItemLocation()
+      } else if (event.ctrlKey && event.keyCode === 75) {
+        // TocItem -移動
+        const index = Math.max(--this.selectedTocItemPosition, 0)
+        this.lightUpByIndex(index)
+        this.jumpToSelectedTocItemLocation()
+      } else if (event.ctrlKey && event.keyCode === 188) {
+        this.selectCurrentLevel()
+      }
+    },
+    jumpToSelectedTocItemLocation() {
+      const ta = document.getElementById("editor");
+      const lineNumberTolocate = this.toc[this.selectedTocItemPosition].lineNumber
+      const length = this.markdown.split("\n", lineNumberTolocate).join("\n").length
+      ta.selectionStart = length
+      ta.selectionEnd = length
+    },
+    lightUpByIndex(index) {
+      this.selectedTocItemPosition = index
+      const selected = this.toc[index]
+      this.lightUp(selected)
+    },
+    selectCurrentLevel() {
+      const ta = document.getElementById("editor");
+      const currentLineNumber = this.markdown.substr(0, ta.selectionEnd).split('\n').length
+      const index = this.toc.map((item) => {
+        return item.lineNumber
+      }).filter((element) => {
+        return element <= currentLineNumber
+      }).length - 1
+      if (index >= 0) {
+        this.lightUpByIndex(index)
       }
     },
     lightUpCurrentLevel() {
-      const ta = document.getElementById("editor");
-      const currentLineNumber = this.markdown.substr(0, ta.selectionEnd).split('\n').length
-      const item = this.toc.find((item) => {
-        return item.lineNumber === currentLineNumber
-      })
-      if (item) {
-        this.lightUp(item)
-      }
+      console.log(this.detectCurrentLevel())
+      this.lightUpByIndex(this.selectedTocItemPosition)
     },
     createTocItem(item) {
       let level = ''
