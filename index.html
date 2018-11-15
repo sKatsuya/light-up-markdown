@@ -85,14 +85,6 @@ let vm = new Vue({
   },
   mounted() {
     window.addEventListener('keyup', this.useHotKey);
-    window.addEventListener('keydown', (event) => {
-      if (event.ctrlKey && event.keyCode === 75) {
-        event.preventDefault()
-      }
-      if (event.ctrlKey && event.keyCode === 76) {
-        event.preventDefault()
-      }
-    });
     this.toc = this.parse(this.markdown)
   },
   watch: {
@@ -110,12 +102,12 @@ let vm = new Vue({
       lightUp.style = `height: 100%; top: 0px;`
     },
     useHotKey(event) {
-      if (event.ctrlKey && event.keyCode === 74) {
+      if (event.ctrlKey && event.keyCode === 40) {
         // TocItem +移動
         const index = Math.min(++this.selectedTocItemPosition, this.toc.length-1)
         this.lightUpByIndex(index)
         this.jumpToSelectedTocItemLocation()
-      } else if (event.ctrlKey && event.keyCode === 75) {
+      } else if (event.ctrlKey && event.keyCode === 38) {
         // TocItem -移動
         const index = Math.max(--this.selectedTocItemPosition, 0)
         this.lightUpByIndex(index)
