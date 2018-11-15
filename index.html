@@ -170,17 +170,21 @@ let vm = new Vue({
       const jump = (item.lineNumber - 1) * lineHeight;
       ta.scrollTop = jump;
 
-      let length = Math.max(this.markdown.split('\n').length - item.lineNumber, 1);
-      const index = this.toc.indexOf(item)
-      for (let i=index+1; i<this.toc.length; i++) {
-        if (item.level >= this.toc[i].level) {
-          length = this.toc[i].lineNumber - item.lineNumber
-          break
-        } else {
-          // nothing
+      const lightUpHeight = (() => {
+        const index = this.toc.indexOf(item)
+        let lineCount = Math.max(this.markdown.split('\n').length - item.lineNumber, 1);
+
+        for (let i=index+1; i<this.toc.length; i++) {
+          if (item.level >= this.toc[i].level) {
+            lineCount = this.toc[i].lineNumber - item.lineNumber
+            break
+          } else {
+            // nothing
+          }
         }
-      }
-      const lightUpHeight = length * lineHeight
+        return lineCount * lineHeight
+      })()
+
       const top = jump - ta.scrollTop
 
       const lightUp = document.getElementById("light-up");
