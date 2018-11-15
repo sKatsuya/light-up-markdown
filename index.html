@@ -77,11 +77,10 @@ textarea {
 let vm = new Vue({
   el: '#wrapper',
   data: {
-    message: 123,
     markdown: window.localStorage.getItem('markdown'),
     toc: '',
     // [{level:1, string: 'aaa', lineNumber: 12, length: 10}, {level:2, string: 'aaa'}, {level:3, string: 'aaa'}]
-    selectedTocItemPosition: 1
+    selectedTocItemPosition: 0
   },
   mounted() {
     window.addEventListener('keyup', this.useHotKey);
