@@ -167,10 +167,8 @@ let vm = new Vue({
     lightUp(item) {
       const ta = document.getElementById("editor");
       const lineHeight = 20
-      const jump = (item.lineNumber - 1) * lineHeight;
-      ta.scrollTop = jump;
 
-      const lightUpHeight = (() => {
+      let lightUpHeight = (() => {
         const index = this.toc.indexOf(item)
         let lineCount = Math.max(this.markdown.split('\n').length - item.lineNumber, 1);
 
@@ -185,10 +183,23 @@ let vm = new Vue({
         return lineCount * lineHeight
       })()
 
-      const top = jump - ta.scrollTop
+      const jump = (item.lineNumber - 1) * lineHeight;
+      //ta.scrollTop = jump;
+      let top = jump - ta.scrollTop
 
       const lightUp = document.getElementById("light-up");
-      lightUp.style = `height: ${lightUpHeight}px; top: ${top}px;`
+      if (top < 0) {
+        // 上にはみ出る時
+        lightUp.style = `height: ${lightUpHeight}px; top: 0px;`
+        ta.scrollTop = ta.scrollTop + top
+      } else if (ta.clientHeight < top) {
+        // 下にはみ出る時
+        top = ta.clientHeight - lightUpHeight
+        lightUp.style = `height: ${lightUpHeight}px; top: ${top}px;`
+        ta.scrollTop = ta.scrollTop + lightUpHeight
+      } else {
+        lightUp.style = `height: ${lightUpHeight}px; top: ${top}px;`
+      }
     }
   }
 })
