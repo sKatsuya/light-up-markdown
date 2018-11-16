@@ -62,12 +62,12 @@ textarea {
 </style>
 
 <title>LightUp Markdown</title>
-<div id="wrapper" @keyup="">
+<div id="wrapper">
   <div id="toc">
     <div class="toc-item" v-for='(item, index) in toc' v-html="createTocItem(item)" @click="lightUpByIndex(index)"
       :class="{'is-selected-toc-item': index === selectedTocItemPosition}"></div>
   </div>
-  <textarea id="editor" v-model="markdown" @keyup="stopLightUp" @click="stopLightUp"></textarea>
+  <textarea id="editor" v-model="markdown" @click="stopLightUp" @scroll="onScroll"></textarea>
 </div>
 <div id="light-up"></div>
 <div id="shadow"></div>
@@ -81,10 +81,11 @@ let vm = new Vue({
     markdown: window.localStorage.getItem('markdown'),
     toc: '',
     // [{level:1, string: 'aaa', lineNumber: 12, length: 10}, {level:2, string: 'aaa'}, {level:3, string: 'aaa'}]
-    selectedTocItemPosition: 0
+    selectedTocItemPosition: 0,
+    selectedItemTopCopy: 0
   },
   mounted() {
-    window.addEventListener('keyup', this.useHotKey);
+    window.addEventListener('keydown', this.useHotKey);
     this.toc = this.parse(this.markdown)
   },
   watch: {
@@ -94,6 +95,14 @@ let vm = new Vue({
     }
   },
   methods: {
+    onScroll() {
+      const ta = document.getElementById("editor");
+      const lightUp = document.getElementById("light-up");
+      let top = window.getComputedStyle(lightUp, null).getPropertyValue('top').replace("px", "");
+      top = this.selectedItemTopCopy - ta.scrollTop
+      const lightUpHeight = window.getComputedStyle(lightUp, null).getPropertyValue('height').replace("px", "")
+      lightUp.style = `height: ${lightUpHeight}px; top: ${top}px;`
+    },
     stopLightUp(event) {
       if (event && event.keyCode === 17) {
         return
@@ -127,6 +136,7 @@ let vm = new Vue({
       this.selectedTocItemPosition = index
       const selected = this.toc[index]
       this.lightUp(selected)
+      this.selectedItemTopCopy = (selected.lineNumber-1) * 20
     },
     selectCurrentLevel() {
       const ta = document.getElementById("editor");
@@ -141,7 +151,6 @@ let vm = new Vue({
       }
     },
     lightUpCurrentLevel() {
-      console.log(this.detectCurrentLevel())
       this.lightUpByIndex(this.selectedTocItemPosition)
     },
     createTocItem(item) {
@@ -184,7 +193,6 @@ let vm = new Vue({
       })()
 
       const jump = (item.lineNumber - 1) * lineHeight;
-      //ta.scrollTop = jump;
       let top = jump - ta.scrollTop
 
       const lightUp = document.getElementById("light-up");
