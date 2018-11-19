@@ -67,7 +67,7 @@ textarea {
     <div class="toc-item" v-for='(item, index) in toc' v-html="createTocItem(item)" @click="lightUpByIndex(index)"
       :class="{'is-selected-toc-item': index === selectedTocItemPosition}"></div>
   </div>
-  <textarea id="editor" v-model="markdown" @click="stopLightUp" @scroll="onScroll"></textarea>
+  <textarea id="editor" v-model="markdown" @click="selectCurrentLevel" @scroll="onScroll"></textarea>
 </div>
 <div id="light-up"></div>
 <div id="shadow"></div>
@@ -92,6 +92,7 @@ let vm = new Vue({
     markdown: (string) => {
       vm.toc = vm.parse(string)
       window.localStorage.setItem('markdown', string)
+      vm.selectCurrentLevel()
     }
   },
   methods: {
@@ -111,12 +112,12 @@ let vm = new Vue({
       lightUp.style = `height: 100%; top: 0px;`
     },
     useHotKey(event) {
-      if (event.ctrlKey && event.keyCode === 40) {
+      if (event.altKey && event.keyCode === 40) {
         // TocItem +移動
         const index = Math.min(++this.selectedTocItemPosition, this.toc.length-1)
         this.lightUpByIndex(index)
         this.jumpToSelectedTocItemLocation()
-      } else if (event.ctrlKey && event.keyCode === 38) {
+      } else if (event.altKey && event.keyCode === 38) {
         // TocItem -移動
         const index = Math.max(--this.selectedTocItemPosition, 0)
         this.lightUpByIndex(index)
