@@ -148,8 +148,11 @@ let vm = new Vue({
       }).filter((element) => {
         return element <= currentLineNumber
       }).length - 1
+
       if (index >= 0) {
         this.lightUpByIndex(index)
+      } else {
+        this.stopLightUp()
       }
     },
     lightUpCurrentLevel() {
