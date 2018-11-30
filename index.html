@@ -66,7 +66,7 @@ textarea {
 <div id="wrapper">
   <div id="toc">
     <div class="toc-item" v-for='(item, index) in toc' v-html="createTocItem(item)" @click="lightUpByIndex(index)"
-      :class="{'is-selected-toc-item': index === selectedTocItemPosition}"></div>
+      :class="{'is-selected-toc-item': index === selectedTocItemIndex}"></div>
   </div>
   <textarea id="editor" v-model="markdown" @click="selectCurrentLevel" @scroll="onScroll"></textarea>
 </div>
@@ -82,7 +82,7 @@ let vm = new Vue({
     markdown: window.localStorage.getItem('markdown'),
     toc: '',
     // [{level:1, string: 'aaa', lineNumber: 12, length: 10}, {level:2, string: 'aaa'}, {level:3, string: 'aaa'}]
-    selectedTocItemPosition: 0,
+    selectedTocItemIndex: 0,
     selectedItemTopCopy: 0
   },
   mounted() {
@@ -115,12 +115,12 @@ let vm = new Vue({
     useHotKey(event) {
       if (event.altKey && event.keyCode === 40) {
         // TocItem +移動
-        const index = Math.min(++this.selectedTocItemPosition, this.toc.length-1)
+        const index = Math.min(++this.selectedTocItemIndex, this.toc.length-1)
         this.lightUpByIndex(index)
         this.jumpToSelectedTocItemLocation()
       } else if (event.altKey && event.keyCode === 38) {
         // TocItem -移動
-        const index = Math.max(--this.selectedTocItemPosition, 0)
+        const index = Math.max(--this.selectedTocItemIndex, 0)
         this.lightUpByIndex(index)
         this.jumpToSelectedTocItemLocation()
       } else if (event.ctrlKey && event.keyCode === 188) {
@@ -129,13 +129,13 @@ let vm = new Vue({
     },
     jumpToSelectedTocItemLocation() {
       const ta = document.getElementById("editor");
-      const lineNumberTolocate = this.toc[this.selectedTocItemPosition].lineNumber
+      const lineNumberTolocate = this.toc[this.selectedTocItemIndex].lineNumber
       const length = this.markdown.split("\n", lineNumberTolocate).join("\n").length
       ta.selectionStart = length
       ta.selectionEnd = length
     },
     lightUpByIndex(index) {
-      this.selectedTocItemPosition = index
+      this.selectedTocItemIndex = index
       const selected = this.toc[index]
       this.lightUp(selected)
       this.selectedItemTopCopy = (selected.lineNumber-1) * 20
@@ -149,6 +149,11 @@ let vm = new Vue({
         return element <= currentLineNumber
       }).length - 1
 
+      // すでにlightup済みであれば何もしない
+      if (index === this.selectedTocItemIndex) {
+        return;
+      }
+
       if (index >= 0) {
         this.lightUpByIndex(index)
       } else {
@@ -156,7 +161,7 @@ let vm = new Vue({
       }
     },
     lightUpCurrentLevel() {
-      this.lightUpByIndex(this.selectedTocItemPosition)
+      this.lightUpByIndex(this.selectedTocItemIndex)
     },
     createTocItem(item) {
       let level = ''
