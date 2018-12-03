@@ -140,7 +140,7 @@ let vm = new Vue({
       this.lightUp(selected)
       this.selectedItemTopCopy = (selected.lineNumber-1) * 20
     },
-    selectCurrentLevel() {
+    selectCurrentLevel(event) {
       const ta = document.getElementById("editor");
       const currentLineNumber = this.markdown.substr(0, ta.selectionEnd).split('\n').length
       const index = this.toc.map((item) => {
@@ -149,8 +149,9 @@ let vm = new Vue({
         return element <= currentLineNumber
       }).length - 1
 
-      // すでにlightup済みであれば何もしない
-      if (index === this.selectedTocItemIndex) {
+      // クリックの時、すでにlightup済みであれば何もしない
+      const isMouseEvent = event instanceof MouseEvent
+      if (isMouseEvent && index === this.selectedTocItemIndex) {
         return;
       }
 
